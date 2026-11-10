@@ -1,0 +1,6 @@
+@MiniNaturalFarms_HostAddress = http://localhost:5033
+
+GET {{MiniNaturalFarms_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
