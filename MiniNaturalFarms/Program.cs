@@ -1,9 +1,11 @@
 using MiniNaturalFarms.Helpers;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;                          // NEW
 using Microsoft.IdentityModel.Tokens;
 using MiniNaturalFarms.Infrastructure;
 using MiniNaturalFarms.Infrastructure.Identity;
+using MiniNaturalFarms.Infrastructure.Persistence;           // NEW (namespace of AppDbContext)
 using MiniNaturalFarms.BackgroundJobs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,7 +62,14 @@ builder.Services.AddHostedService<PendingPaymentCleanupService>();
 var app = builder.Build();
 app.UseExceptionHandler();
 
-await IdentitySeeder.SeedAsync(app.Services);
+// NEW: create or update the database tables first
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
+
+await IdentitySeeder.SeedAsync(app.Services);                // runs after the tables exist
 
 if (app.Environment.IsDevelopment())
 {

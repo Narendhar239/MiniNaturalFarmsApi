@@ -321,7 +321,8 @@ namespace MiniNaturalFarms.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("RazorpayRefundId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("RefundedAt")
                         .HasColumnType("datetime2");
