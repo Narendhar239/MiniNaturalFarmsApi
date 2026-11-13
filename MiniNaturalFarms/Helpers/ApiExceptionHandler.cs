@@ -7,7 +7,17 @@ namespace MiniNaturalFarms.Helpers;
 public class ApiExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<ApiExceptionHandler> _logger;
-    public ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) => _logger = logger;
+    private readonly bool _showDetails;
+
+    public ApiExceptionHandler(
+        ILogger<ApiExceptionHandler> logger,
+        IConfiguration config,
+        IHostEnvironment env)
+    {
+        _logger = logger;
+        // Show full error details in Development, or when the Errors:ShowDetails setting is true
+        _showDetails = env.IsDevelopment() || config.GetValue<bool>("Errors:ShowDetails");
+    }
 
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception ex, CancellationToken ct)
     {
@@ -21,15 +31,24 @@ public class ApiExceptionHandler : IExceptionHandler
             _ => (StatusCodes.Status500InternalServerError, "Server error")
         };
 
-        if (status == 500) _logger.LogError(ex, "Unhandled exception");
+        if (status == StatusCodes.Status500InternalServerError)
+        {
+            _logger.LogError(ex, "Unhandled exception for {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+        }
+
+        var detail = status == StatusCodes.Status500InternalServerError
+            ? (_showDetails ? ex.ToString() : "Something went wrong.")
+            : ex.Message;
 
         context.Response.StatusCode = status;
         await context.Response.WriteAsJsonAsync(new ProblemDetails
         {
             Status = status,
             Title = title,
-            Detail = status == 500 ? "Something went wrong." : ex.Message
+            Detail = detail
         }, ct);
+
         return true;
     }
 }
