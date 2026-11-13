@@ -16,6 +16,9 @@ jobs:
       - name: Install EF tool
         run: dotnet tool install --global dotnet-ef
 
+      - name: Restore packages
+        run: dotnet restore MiniNaturalFarms.sln
+
       - name: Apply migrations
         run: >
           dotnet ef database update
