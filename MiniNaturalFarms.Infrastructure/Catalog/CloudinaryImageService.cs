@@ -1,6 +1,7 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Options;
+using MiniNaturalFarms.Application.Common;
 using MiniNaturalFarms.Application.Images;
 using MiniNaturalFarms.Infrastructure.Settings;
 
@@ -8,17 +9,29 @@ namespace MiniNaturalFarms.Infrastructure.Catalog;
 
 public class CloudinaryImageService : IImageService
 {
-    private readonly Cloudinary _cloudinary;
+    // Null when Cloudinary settings are missing: the rest of the API keeps working,
+    // only image upload is unavailable until the settings are added.
+    private readonly Cloudinary? _cloudinary;
 
     public CloudinaryImageService(IOptions<CloudinarySettings> options)
     {
         var s = options.Value;
+        if (string.IsNullOrWhiteSpace(s.CloudName) ||
+            string.IsNullOrWhiteSpace(s.ApiKey) ||
+            string.IsNullOrWhiteSpace(s.ApiSecret))
+        {
+            return;
+        }
+
         _cloudinary = new Cloudinary(new Account(s.CloudName, s.ApiKey, s.ApiSecret));
         _cloudinary.Api.Secure = true;
     }
 
     public async Task<StoredImage> UploadAsync(Stream content, string fileName, string folder, CancellationToken ct = default)
     {
+        if (_cloudinary is null)
+            throw new BadRequestException("Image upload is not configured. Add the Cloudinary settings (CloudName, ApiKey, ApiSecret) to enable it.");
+
         var upload = new ImageUploadParams
         {
             File = new FileDescription(fileName, content),
@@ -37,7 +50,7 @@ public class CloudinaryImageService : IImageService
 
     public async Task DeleteAsync(string publicId, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(publicId)) return;
+        if (_cloudinary is null || string.IsNullOrWhiteSpace(publicId)) return;
         await _cloudinary.DestroyAsync(new DeletionParams(publicId));
     }
 }
