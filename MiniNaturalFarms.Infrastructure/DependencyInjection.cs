@@ -17,6 +17,7 @@ using MiniNaturalFarms.Infrastructure.Orders;
 using MiniNaturalFarms.Infrastructure.Payments;
 using MiniNaturalFarms.Application.Admin;
 using MiniNaturalFarms.Infrastructure.Admin;
+using MiniNaturalFarms.Infrastructure.Notifications;
 namespace MiniNaturalFarms.Infrastructure;
 
 public static class DependencyInjection
@@ -33,7 +34,9 @@ public static class DependencyInjection
                 o.User.RequireUniqueEmail = true;
             })
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders(); 
+         
+
 
         services.AddScoped<JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
@@ -56,6 +59,10 @@ public static class DependencyInjection
         services.AddScoped<IAdminInventoryService, AdminInventoryService>();
         services.AddScoped<IAdminCustomerService, AdminCustomerService>();
         services.AddScoped<IAdminReportService, AdminReportService>();
+        services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(1));
+        services.Configure<EmailSettings>(config.GetSection("Email"));
+        services.AddScoped<IEmailService, SmtpEmailSender>();
+
 
 
         return services;

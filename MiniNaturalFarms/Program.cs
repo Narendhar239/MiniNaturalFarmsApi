@@ -1,12 +1,17 @@
-using MiniNaturalFarms.Helpers;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;                          // NEW
 using Microsoft.IdentityModel.Tokens;
+using MiniNaturalFarms.Application.Auth;
+using MiniNaturalFarms.BackgroundJobs;
+using MiniNaturalFarms.Helpers;
 using MiniNaturalFarms.Infrastructure;
 using MiniNaturalFarms.Infrastructure.Identity;
+using MiniNaturalFarms.Infrastructure.Notifications;
 using MiniNaturalFarms.Infrastructure.Persistence;           // NEW (namespace of AppDbContext)
-using MiniNaturalFarms.BackgroundJobs;
+using MiniNaturalFarms.Infrastructure.Settings;
+using System.Text;
+using MiniNaturalFarms.Infrastructure.Notifications;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +63,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHostedService<PendingPaymentCleanupService>();
+
 
 var app = builder.Build();
 app.UseExceptionHandler();

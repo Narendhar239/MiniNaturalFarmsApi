@@ -29,6 +29,20 @@ public class AuthController : ControllerBase
         return result.Succeeded ? Ok(result.Data) : Unauthorized(new { errors = result.Errors });
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken ct)
+    {
+        await _auth.ForgotPasswordAsync(request, ct);
+        return Ok(new { message = "If an account exists for this email, a password reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken ct)
+    {
+        await _auth.ResetPasswordAsync(request, ct);
+        return NoContent();
+    }
+
     [Authorize]
     [HttpGet("me")]
     public IActionResult Me()
