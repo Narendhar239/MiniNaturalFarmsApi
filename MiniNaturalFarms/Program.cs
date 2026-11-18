@@ -12,6 +12,7 @@ using MiniNaturalFarms.Infrastructure.Persistence;           // NEW (namespace o
 using MiniNaturalFarms.Infrastructure.Settings;
 using System.Text;
 using MiniNaturalFarms.Infrastructure.Notifications;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
