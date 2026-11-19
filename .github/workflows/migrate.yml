@@ -1,7 +1,7 @@
 name: Run EF Migrations
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:      # yours: keep your existing trigger
 
 jobs:
   migrate:
@@ -11,17 +11,46 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '9.0.x'          # yours: keep your version
 
-      - name: Install EF tool
-        run: dotnet tool install --global dotnet-ef
+      # yours: keep your existing "install dotnet-ef" step here
+      # e.g. dotnet tool install --global dotnet-ef
 
-      - name: Restore packages
-        run: dotnet restore MiniNaturalFarms.sln
+      # ---------- NEW: open the firewall ----------
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Get runner IP
+        id: ip
+        run: echo "ip=$(curl -s https://api.ipify.org)" >> $GITHUB_OUTPUT
+
+      - name: Open SQL firewall
+        run: |
+          az sql server firewall-rule create \
+            --resource-group balajifarms239 \
+            --server mininaturalfarms \
+            --name github-runner \
+            --start-ip-address ${{ steps.ip.outputs.ip }} \
+            --end-ip-address ${{ steps.ip.outputs.ip }}
+
+      - name: Wait for firewall rule
+        run: sleep 30
+
+      # ---------- yours: unchanged ----------
       - name: Apply migrations
         run: >
           dotnet ef database update
           --project MiniNaturalFarms.Infrastructure
           --startup-project MiniNaturalFarms
-          --connection "${{ secrets.SQL_CONNECTION_STRING }}"
+          --connection "${{ secrets.YOUR_EXISTING_SECRET_NAME }}"
+
+      # ---------- NEW: close the firewall ----------
+      - name: Close SQL firewall
+        if: always()
+        run: |
+          az sql server firewall-rule delete \
+            --resource-group balajifarms239 \
+            --server mininaturalfarms \
+            --name github-runner
